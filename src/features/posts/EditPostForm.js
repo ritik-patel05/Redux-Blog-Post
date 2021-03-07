@@ -23,7 +23,7 @@ export const EditPostForm = () => {
   const onSavePostClicked = () => {
     if (title && content) {
       dispatch(postUpdated({ id: postId, title, content }))
-      history.push(`/posts/${postId}`)
+      history.push(`/posts/${postId}`) // This will change the page when save button is clicked.
     }
   }
 
