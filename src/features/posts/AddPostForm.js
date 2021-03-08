@@ -1,11 +1,13 @@
+import { unwrapResult } from '@reduxjs/toolkit'
 import React, { useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
-import { postAdded } from './postsSlice'
+import { addNewPost } from './postsSlice'
 
 export const AddPostForm = () => {
   const [title, setTitle] = useState('')
   const [content, setContent] = useState('')
   const [userId, setUserId] = useState('')
+  const [addRequestStatus, setAddRequestStatus] = useState('idle')
 
   const dispatch = useDispatch()
 
@@ -15,7 +17,7 @@ export const AddPostForm = () => {
   const onContentChanged = (e) => setContent(e.target.value)
   const onAuthorChanged = (e) => setUserId(e.target.value)
 
-  const onSavePostClicked = () => {
+  /*const onSavePostClicked = () => {
     if (title && content) {
       dispatch(
         /*postAdded({
@@ -31,13 +33,13 @@ export const AddPostForm = () => {
           
           title,
           content,
-        })*/
+        })
         postAdded(title, content, userId)
       )
       setTitle('')
       setContent('')
     }
-  }
+  } */
 
   // If the value is omitted or is 0, -0, null, false, NaN, undefined, or the empty string (""),
   // the object has an initial value of false.
@@ -57,8 +59,29 @@ export const AddPostForm = () => {
   var x = !!(expression);          // ...or this
   var x = new Boolean(expression); // don't use this!
   */
-  const canSave = Boolean(title) && Boolean(content) && Boolean(userId)
+  const canSave =
+    [title, content, userId].every(Boolean) && addRequestStatus === 'idle'
 
+  const onSavePostClicked = async () => {
+    if (canSave) {
+      try {
+        setAddRequestStatus('pending')
+        const resultAction = await dispatch(
+          addNewPost({ title, content, user: userId })
+        )
+        unwrapResult(resultAction)
+        setUserId('')
+        setTitle('')
+        setContent('')
+        /* createAsyncThunk handles any errors internally, so that we don't see any messages about "rejected Promises" in our logs. It then returns the final action it dispatched: either the fulfilled action if it succeeded, or the rejected action if it failed. Redux Toolkit has a utility function called unwrapResult that will return either the actual action.payload value from a fulfilled action, or throw an error if it's the rejected action. This lets us handle success and failure in the component using normal try/catch logic. So, we'll clear out the input fields to reset the form if the post was successfully created, and log the error to the console if it failed.
+         */
+      } catch (err) {
+        console.error('Failed to save the post: ', err)
+      } finally {
+        setAddRequestStatus('idle')
+      }
+    }
+  }
   const usersOptions = users.map((user) => (
     <option key={user.id} value={user.id}>
       {user.name}
